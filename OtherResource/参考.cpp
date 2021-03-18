@@ -1,5 +1,3 @@
-#include <iostream>
-#include <string>
 #include <unordered_map>
 #include <vector>
 #include <ctime>
@@ -12,9 +10,9 @@ using namespace std;
 
 #define TEST
 
-// 服务器信息
+// 服务器信息, server_Type, #A_cpuCores ,_#B_cpuCores, #A_memorySize/2, #B_memorySize/2, _serverCost, _powerCost 
 unordered_map<string,vector<int>> serverInfos;
-// 虚拟机信息
+// 虚拟机信息, {vmType, vmCpuCores, vmMemory, bool vmTwoNodes}
 unordered_map<string,vector<int>> vmInfos;
 // 请求信息
 vector<vector<string>> requestInfos;
@@ -24,8 +22,7 @@ int serverNumber = 0;
 unordered_map<int,vector<int>> sysServerResource;
 
 // 当前开机服务器
-vector<int> serverRunVms;
-// 记录虚拟机运行在那个服务器上
+vector<int> serverRunVms;   // 以server_id为索引(因为买了服务器不能退货嘛)
 unordered_map<string,vector<int>> vmOnServer;
 
 vector<string> res;
@@ -45,9 +42,11 @@ long long SERVERCOST = 0,POWERCOST=0,TOTALCOST =0;
 //}
 
 
+// 根据文本行生成可供购买的服务器资料
 void generateServer(string &serverType,string &cpuCores,string &memorySize,string &serverCost,string &powerCost){
-    string _serverType="";
-    for(int i =1;i<serverType.size() -1;i++){
+    // 巧妙，_var stands for temp var.
+    string _serverType=""; 
+    for(int i=1; i<serverType.size()-1; i++){
         _serverType += serverType[i];
     }
     int _cpuCores =0,_memorySize=0,_serverCost=0,_powerCost=0;
@@ -67,7 +66,7 @@ void generateServer(string &serverType,string &cpuCores,string &memorySize,strin
     serverInfos[_serverType] = vector<int>{_cpuCores/2 ,_cpuCores/2,_memorySize/2,_memorySize/2,_serverCost,_powerCost};
 }
 
-
+// {vmType, vmCpuCores, vmMemory, bool vmTwoNodes}
 void generateVm(string &vmType,string &vmCpuCores,string &vmMemory,string &vmTwoNodes){
     string _vmType;
 
@@ -90,16 +89,17 @@ void generateVm(string &vmType,string &vmCpuCores,string &vmMemory,string &vmTwo
     }
     vmInfos[_vmType] = vector<int>{_vmCpuCores,_vmMemory,_vmTwoNodes};
 }
-// 解析用户添加请求
-void generateRequest(string &op,string &reqVmType,string &reqId){
-    string _op,_reqVmType,_reqId;
-    _op = op.substr(1,op.size() -1);
+
+// 解析用户添加请求, vector<string> {op, reqVmType, reqId}
+void generateRequest(string &op, string &reqVmType, string &reqId){
+    string _op, _reqVmType, _reqId;
+    _op = op.substr(1, op.size() -1);
     _reqVmType = reqVmType.substr(0,reqVmType.size() -1);
     _reqId = reqId.substr(0,reqId.size() -1);
     requestInfos.push_back(vector<string>{_op,_reqVmType,_reqId});
 }
 
-// 解析用户删除请求
+// 解析用户删除请求, vector<string> {op, reqId}
 void generateRequest(string &op,string &reqId){
     string _op,_reqId;
     _reqId = reqId.substr(0,reqId.size() -1);
@@ -108,11 +108,12 @@ void generateRequest(string &op,string &reqId){
 }
 
 // 尝试在服务器上分配虚拟机资源
-bool choseServer(vector<int> &server,vector<int> &vm,int serverId,string vmId){
-    int vmCores = vm[0],vmMemory = vm[1],vmTwoNodes = vm[2];
-    int &serverCoreA = server[0],&serverCoreB = server[1],&serverMemoryA = server[2],&serverMemoryB = server[3];
+bool choseServer(vector<int> &server, vector<int> &vm, int serverId, string vmId){
+    int vmCores = vm[0], vmMemory = vm[1], vmTwoNodes = vm[2];  // 该vm所需要的资源
+    int &serverCoreA = server[0], &serverCoreB = server[1], &serverMemoryA = server[2], &serverMemoryB = server[3]; // 该服务器可分配的资源
     if(vmTwoNodes){
-        int needCores = vmCores/2,needMemory = vmMemory/2;
+        int needCores = vmCores/2, needMemory = vmMemory/2;
+        // 资源够
         if(serverCoreA >= needCores && serverCoreB >=needCores && serverMemoryA >= needMemory && serverMemoryB >= needMemory){
             serverCoreA -= needCores;
             serverCoreB -= needCores;
@@ -122,10 +123,12 @@ bool choseServer(vector<int> &server,vector<int> &vm,int serverId,string vmId){
             res.push_back("("+to_string(serverId)+")\n");
             return true;
         }
+        // 资源不够
         else{
             return false;
         }
     }
+    // 单节点的购买策略是先购买A，A不够再购买B
     else if(serverCoreA >= vmCores && serverMemoryA >= vmMemory){
         serverCoreA -= vmCores;
         serverMemoryA -= vmMemory;
@@ -144,11 +147,12 @@ bool choseServer(vector<int> &server,vector<int> &vm,int serverId,string vmId){
 }
 
 
-// 处理创建虚拟机操作
+// 处理创建虚拟机操作, success ? 1:-1
 int createVM(vector<string> &createVmInfo){
-    string _reqVmType = createVmInfo[1],_reqId = createVmInfo[2];
-    vector<int> vm = vmInfos[_reqVmType];
+    string _reqVmType = createVmInfo[1], _reqId = createVmInfo[2];
+    vector<int> vm = vmInfos[_reqVmType];   // {vmCpuCores, vmMemory, bool vmTwoNodes}
     int success = -1;
+    // 遍历所有已购服务器，看能不能购买到（这里没有任何优化）
     for(int i=0;i<serverNumber;i++){
         auto &server = sysServerResource[i];
         if(choseServer(server,vm,i,_reqId)) {
@@ -266,40 +270,43 @@ int main() {
     clock_t start, finish;
     start = clock();
 #ifdef TEST
+    // 重定向
     std::freopen(filePath.c_str(),"rb",stdin);
 #endif
+
+    // 依次初始化可购买的服务器信息
     int serverNum;
     string serverType,cpuCores,memorySize,serverCost,powerCost;
     scanf("%d",&serverNum);
-
     for(int i =0;i<serverNum;i++){
         cin>>serverType>>cpuCores>>memorySize>>serverCost>>powerCost;
         generateServer(serverType,cpuCores,memorySize,serverCost,powerCost);
     }
 
+    // 依次初始化可出售的虚拟机信息
     int vmNumber = 0;
     scanf("%d",&vmNumber);
-
     string vmType,vmCpuCores,vmMemory,vmTwoNodes;
     for(int i =0;i<vmNumber;i++){
         cin>>vmType>>vmCpuCores>>vmMemory>>vmTwoNodes;
         generateVm(vmType,vmCpuCores,vmMemory,vmTwoNodes);
     }
 
+    // 共有 requestdays 这么多天的数据
     int requestdays = 0,dayRequestNumber = 0;
-    scanf("%d",&requestdays);
-    string op,reqVmType,reqId;
+    scanf("%d", &requestdays);
+    string op, reqVmType, reqId;
 
     // 开始处理请求
-    bugServer();
-    for(int day=0;day<requestdays;day++){
-        scanf("%d",&dayRequestNumber);
+    bugServer();    // 根据订单信息初始化服务器（大优化，考虑如何初始化）
+    for(int day=0; day<requestdays; day++){
+        scanf("%d", &dayRequestNumber);
         requestInfos.clear();
-        for(int i =0;i<dayRequestNumber;i++){
+        for(int i =0; i<dayRequestNumber; i++){
             cin>>op;
             if(op[1] == 'a'){
                 cin>>reqVmType>>reqId;
-                generateRequest(op,reqVmType,reqId);
+                generateRequest(op, reqVmType, reqId);
             }else{
                 cin>>reqId;
                 generateRequest(op,reqId);
