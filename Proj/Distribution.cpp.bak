@@ -1,0 +1,316 @@
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <cstdlib>
+#include <time.h>
+
+// 粗糙的处理订单的版本
+#define COARSE
+
+
+using namespace std;
+
+class ServerType{
+    public:
+        string type_name;
+        int cpu_size;
+        int mem_size;
+        int hard_cost;
+        int power_cost;
+    public:
+        ServerType(){
+
+        }
+        ServerType(string _type_name, int _cpu_size, int _mem_size, int _hard_cost, int _power_cost){
+            type_name =     _type_name;
+            cpu_size =      _cpu_size;
+            mem_size =   _mem_size;
+            hard_cost =     _hard_cost;
+            power_cost =    _power_cost;
+        }
+};
+
+// is_double_D: is distributed both in A and B?
+class VMType{
+    public:
+        string type_name;
+        int cpu_size;
+        int mem_size;
+        bool is_double_D;    
+    
+    public:
+        VMType(){
+
+        }
+        VMType(string _type_name, int _cpu_size, int _mem_size, bool _is_double_D){
+            type_name =     _type_name;
+            cpu_size =      _cpu_size;
+            mem_size =   _mem_size;
+            is_double_D =   _is_double_D;
+        }
+};
+
+/*
+ * 已购入的服务器对象
+ * curr:            current
+ * loading_VM_list: 挂载在该服务器上的VM集合，存储VM.vm_ID 
+ * server_ID:       the usage of server_ID is...
+ */
+class Server{
+    public:
+        string server_type_name;
+        int server_ID;
+        int A_curr_cpu_size;
+        int A_curr_mem_size;
+        int B_curr_cpu_size;
+        int B_curr_mem_size;
+
+        vector<int> loading_VM_list;
+
+    public:
+        Server(){
+
+        }
+        Server(string _server_type_name, int _server_ID, int _A_curr_cpu_size, int _A_curr_mem_size, int _B_curr_cpu_size, int _B_curr_mem_size){
+            server_type_name =  _server_type_name;
+            server_ID =         _server_ID;
+            A_curr_cpu_size =   _A_curr_cpu_size;
+            A_curr_mem_size =   _A_curr_mem_size;
+            B_curr_cpu_size =   _B_curr_cpu_size;
+            B_curr_mem_size =   _B_curr_mem_size;
+        }
+};
+
+/*
+ * 当前运行的虚拟机对象
+ * is_in_A: 表明该对象是否挂载在server_ID服务器的A节点上，0表示在B节点，1表示在A节点，默认为-1，表示双节点挂载
+ */
+class VM{
+    public:
+       string vm_type_name;
+       int vm_ID;
+       int server_ID;
+       int is_in_A;
+    
+    public:
+       VM(){
+
+       }
+       VM(string _vm_type_name, int _vm_ID){
+           vm_type_name =   _vm_type_name;
+           vm_ID =          _vm_ID;
+       }
+       VM(string _vm_type_name, int _vm_ID, int _server_ID, int _is_in_A=-1){
+           vm_type_name =   _vm_type_name;
+           server_ID =      _server_ID;
+           vm_ID =          _vm_ID;
+           is_in_A =        _is_in_A;
+       }
+};
+
+/*
+ * 请求订单项
+ * vm_type: 虚拟机的类型，当type=add时才用，默认为null
+ * vm_ID:      待处理对象的ID，如del就是删除ID对应的虚拟机，add就是添加该虚拟机后的ID
+ */
+class RequestOrder{
+    public:
+        string op;
+        string vm_type_name;
+        int vm_ID;
+    public:
+        RequestOrder(){}
+        RequestOrder(string _op, int _vm_ID, string _vm_type_name = ""){
+            op =            _op;
+            vm_type_name =  _vm_type_name;
+            vm_ID =         _vm_ID;
+        }
+
+};
+
+// 因为后面购买虚拟机序列中 add 操作提供的是vmType_name参数，所以要有个的vmType_name -> VmType obj的映射
+unordered_map<string, VMType> VMTypeInfo;
+// 与上同理
+unordered_map<string, ServerType> ServerTypeInfo;
+
+// 现有服务器信息，由于服务器买入就不会被退货了，所以其在vector中的下标，就是其ID
+vector<Server> ServerList;
+// 已售出的VM对象，通过ID可以直接索引得到该VM对象。
+unordered_map<int, VM> VMMap;
+
+// 截至在del之前的add订单集合
+vector<RequestOrder> RequestAddList;
+
+#ifdef COARSE
+// 尝试将该添加请求放置进入已有的服务器资源之中，返回bool
+bool PlantVM(RequestOrder request_order){
+    // 先构建部分虚拟机实例
+    VM vm = VM(request_order.vm_type_name, request_order.vm_ID);
+    VMType curr_vm_type = VMTypeInfo[request_order.vm_type_name];
+
+    vector<Server>::iterator curr_it = ServerList.begin();
+    for(; curr_it != ServerList.end(); curr_it++){
+        if(curr_vm_type.is_double_D){
+            if((*curr_it).A_curr_cpu_size > (curr_vm_type.cpu_size)/2 &&
+                    (*curr_it).B_curr_cpu_size > (curr_vm_type.cpu_size)/2 &&
+                    (*curr_it).A_curr_mem_size > (curr_vm_type.mem_size)/2 &&
+                    (*curr_it).B_curr_mem_size > (curr_vm_type.mem_size)/2 ){
+                // 扣除服务器资源
+                (*curr_it).A_curr_cpu_size -= (curr_vm_type.cpu_size)/2;
+                (*curr_it).B_curr_cpu_size -= (curr_vm_type.cpu_size)/2;
+                (*curr_it).A_curr_mem_size -= (curr_vm_type.mem_size)/2;
+                (*curr_it).B_curr_mem_size -= (curr_vm_type.mem_size)/2;
+                // 指明该vm在哪一个服务器上
+                vm.server_ID = (*curr_it).server_ID;
+                vm.is_in_A = -1;
+                VMMap[vm.vm_ID] = vm;
+                return true;
+            }
+        }else{  // 单节点部署, 先看A节点，不够再B节点
+            if((*curr_it).A_curr_cpu_size > (curr_vm_type.cpu_size) && 
+                    (*curr_it).A_curr_mem_size > (curr_vm_type.mem_size)){
+                (*curr_it).A_curr_cpu_size -= (curr_vm_type.cpu_size);
+                (*curr_it).A_curr_mem_size -= (curr_vm_type.mem_size);
+
+                vm.server_ID = (*curr_it).server_ID;
+                vm.is_in_A = 1;
+                VMMap[vm.vm_ID] = vm;
+                return true;
+            }else if((*curr_it).B_curr_cpu_size > (curr_vm_type.cpu_size) &&
+                    (*curr_it).B_curr_mem_size > (curr_vm_type.mem_size)){
+                (*curr_it).B_curr_cpu_size -= (curr_vm_type.cpu_size);
+                (*curr_it).B_curr_mem_size -= (curr_vm_type.mem_size);
+
+                vm.server_ID = (*curr_it).server_ID;
+                vm.is_in_A = 0;
+                VMMap[vm.vm_ID] = vm;
+                return true;
+            }
+        }
+    }
+    return false;
+
+}
+#endif
+
+// 对一系列添加订单做处理，扩容、迁移、分配工作全在这里做。
+void DealOrder(vector<RequestOrder> RequestAddList){
+    vector<RequestOrder>::iterator curr_it = RequestAddList.begin();
+    for(; curr_it!=RequestAddList.end(); curr_it++){
+        while(!PlantVM(*curr_it)){
+            // 放置失败就扩容, 扩容策略：随机选择一个服务器进行购买
+            srand((unsigned)time(NULL));
+            int anticipate_server_index = rand() % ServerTypeInfo.size();
+            unordered_map<string, ServerType>::iterator it = ServerTypeInfo.begin();
+            for(int i=0; i<anticipate_server_index; i++){
+                it++;   // 由于map不是顺序容器，所以只能这样做了...
+            }
+
+            ServerType _server_type = it->second;
+            // 初始化一个该类型的服务器，添加到ServerList之中
+            Server server_item = Server(_server_type.type_name, 
+                    ServerList.size()-1, 
+                    _server_type.cpu_size/2, 
+                    _server_type.mem_size/2, 
+                    _server_type.cpu_size/2,
+                    _server_type.mem_size/2);
+            ServerList.push_back(server_item);  // 观察服务器资源大部分都大于虚拟机，所以偷个懒，不判断了，再次Plant一遍，性能肯定会降低了，优化之一是从上一次添加的服务器那里进行尝试
+        } 
+    }
+    return;
+}
+
+// 对单一删除的订单做处理, 运行该函数时要进行判断 RequestOrder 是否为空
+// 逻辑: requestOrderObject.vm_ID -> 得到VM_object -> vm.server_ID -> serverObj
+// 恢复服务器的内存、移除服务器上维护的挂载节点列表
+void DealOrder(RequestOrder requestorder){
+    VM del_vm = VMMap[requestorder.vm_ID]; 
+    Server server = ServerList[del_vm.server_ID];
+    
+    return;
+}
+
+// 根据输入生成服务器类型信息，有服务器名->服务器类对象的map映射
+void GenerateServerType(string type_name, int cpu_size, int mem_size, int hard_cost, int power_cost){
+    ServerType _server_type = ServerType(type_name, cpu_size, mem_size, hard_cost, power_cost);
+    ServerTypeInfo[type_name] = _server_type;
+}
+
+void GenerateVMType(string type_name, int cpu_size, int mem_size, bool is_double_D){
+    VMType _vm_type = VMType(type_name, cpu_size, mem_size, is_double_D);
+    VMTypeInfo[type_name] = _vm_type;
+}
+
+int main(){
+    const string file_path = "./data.txt";
+    std::freopen(file_path.c_str(), "rb", stdin);
+
+    int server_type_num;
+    int vm_type_num;
+    int total_day_num;
+    string _tmp;
+
+    // 输入可购入的服务器信息
+    scanf("%d", &server_type_num);
+    ServerType _server_type = ServerType();
+    string type_name, cpu_size, mem_size, hard_cost, power_cost;
+    for(int i=0; i<server_type_num; i++){
+        cin >> type_name >> cpu_size >> mem_size >> hard_cost >> power_cost;
+        GenerateServerType(type_name.substr(1, type_name.size()-2), 
+                stoi(cpu_size.substr(0, cpu_size.size()-1)), 
+                stoi(mem_size.substr(0, mem_size.size()-1)), 
+                stoi(hard_cost.substr(0, hard_cost.size()-1)), 
+                stoi(power_cost.substr(0, power_cost.size()-1)));
+    }
+
+    // 输入可售出的虚拟机信息
+    scanf("%d", &vm_type_num);
+    VMType _vm_type = VMType();
+    string is_double_D;
+    for(int i=0; i<vm_type_num; i++){
+        cin >> type_name >> cpu_size >> mem_size >> is_double_D;
+        GenerateVMType(type_name.substr(1, type_name.size()-2), 
+                stoi(cpu_size.substr(0, cpu_size.size()-1)),
+                stoi(mem_size.substr(0, mem_size.size()-1)), 
+                stoi(is_double_D.substr(0, is_double_D.size()-1)));
+    }
+
+    scanf("%d", &total_day_num);
+
+    // 遍历所有天
+    for(int curr_day_index=0; curr_day_index<total_day_num; curr_day_index++){
+        int curr_day_request_num;
+        string op, vm_ID; 
+
+        scanf("%d", &curr_day_request_num);
+        
+        // 遍历当天所有请求
+        for(int curr_request_index=0; curr_request_index<curr_day_request_num; curr_request_index++){
+            cin >> op;
+            op = op.substr(1, op.size()-2);
+            // 订单处理顺序逻辑：由于del请求很少，所以批处理add请求(这样就可以对该add集合内部的add进行乱序分配了，便于优化), 注意dealOrder(add集合)调用的位置。
+            if(op.compare("add") == 0){
+                cin >> type_name >> vm_ID;
+                RequestOrder request_order = RequestOrder(op, 
+                        stoi(vm_ID.substr(0, vm_ID.size()-1)), 
+                        type_name.substr(0, type_name.size()-1));
+                RequestAddList.push_back(request_order);
+            }
+            else if(op.compare("del") == 0){
+                RequestOrder request_order = RequestOrder(op, 
+                        stoi(vm_ID.substr(0, vm_ID.size()-1)));
+                DealOrder(RequestAddList);
+                DealOrder(request_order);
+            }
+        }
+        DealOrder(RequestAddList);
+    }
+
+
+
+    return 0;
+}
