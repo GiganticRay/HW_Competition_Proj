@@ -146,7 +146,10 @@ unordered_map<int, VM> VMMap;
 vector<RequestOrder> RequestAddList;
 
 #ifdef COARSE
-// 尝试将该添加请求放置进入已有的服务器资源之中，返回bool
+// 将vm对象与server对象的资源做对比，看能否放得下(vm与server都可以是不完整变量，这里只做资源对比)
+bool TryPlantVM(VM _vm, Server _server){
+    VMType curr_vm_type = VMTypeInfo[_vm.vm_type_name];
+}
 bool PlantVM(RequestOrder request_order){
     // 先构建部分虚拟机实例
     VM vm = VM(request_order.vm_type_name, request_order.vm_ID);
