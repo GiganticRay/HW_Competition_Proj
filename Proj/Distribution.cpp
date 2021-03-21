@@ -10,6 +10,8 @@
 
 // 粗糙的处理订单的版本
 #define COARSE
+// 输出
+#define OutPut
 
 
 using namespace std;
@@ -145,24 +147,32 @@ unordered_map<int, VM> VMMap;
 // 截至在del之前的add订单集合
 vector<RequestOrder> RequestAddList;
 
+// 输出所需要的variables
+#ifdef OutPut
+unordered_map<string, int> DayPurchaseNumMap;
+string TotalOutput;
+string DayOutput;
+vector<int> DayPurchaseVMIDList;
+#endif // OutPut
+
 #ifdef COARSE
 // 将vm对象与server对象的资源做对比，看能否放得下(vm与server都可以是不完整变量，这里只做资源对比)
 bool IsServerSatisfyVM(VM &_vm, Server &_server){
     VMType _vm_type = VMTypeInfo[_vm.vm_type_name];
 	bool result = false;
 	if(_vm_type.is_double_D){
-		if(_server.A_curr_cpu_size >= (_vm_type.cpu_size)/2 &&
-				_server.B_curr_cpu_size >= (_vm_type.cpu_size)/2 &&
-				_server.A_curr_mem_size >= (_vm_type.mem_size)/2 &&
-				_server.B_curr_mem_size >= (_vm_type.mem_size)/2 ){
+		if(_server.A_curr_cpu_size > (_vm_type.cpu_size)/2 &&
+				_server.B_curr_cpu_size > (_vm_type.cpu_size)/2 &&
+				_server.A_curr_mem_size > (_vm_type.mem_size)/2 &&
+				_server.B_curr_mem_size > (_vm_type.mem_size)/2 ){
 			result = true;
 		}
 	}else{  // 单节点部署, 先看A节点，不够再B节点
-		if(_server.A_curr_cpu_size >= (_vm_type.cpu_size) &&
-				_server.A_curr_mem_size >= (_vm_type.mem_size)){
+		if(_server.A_curr_cpu_size > (_vm_type.cpu_size) &&
+				_server.A_curr_mem_size > (_vm_type.mem_size)){
 			result = true;
-		}else if(_server.B_curr_cpu_size >= (_vm_type.cpu_size) &&
-				_server.B_curr_mem_size >= (_vm_type.mem_size)){
+		}else if(_server.B_curr_cpu_size > (_vm_type.cpu_size) &&
+				_server.B_curr_mem_size > (_vm_type.mem_size)){
 			result = true;
 		}
 	}
@@ -209,11 +219,18 @@ bool PlantVMInServerList(VM &_vm){
 	bool result = false;
 
 	// 遍历所有服务器，等待刘兄最小二乘按照浪费成本排序遍历
-    vector<Server>::iterator curr_it = ServerList.begin();
-    for(; curr_it != ServerList.end(); curr_it++){
+    vector<Server>::iterator curr_it = ServerList.begin() + (int)(ServerList.size()/1.33);
+//    vector<Server>::iterator curr_it = ServerList.begin();
+    vector<Server>::iterator end_it = ServerList.end();
+    for(; curr_it != end_it; curr_it++){
 		if(IsServerSatisfyVM(_vm, *curr_it)){
 			PlantVMInServerItem(_vm, *curr_it);
 			result = true;
+
+#ifdef OutPut
+            DayPurchaseVMIDList.push_back(_vm.vm_ID);
+#endif // OutPut
+
 			break;
 		}
     }
@@ -222,7 +239,6 @@ bool PlantVMInServerList(VM &_vm){
 }
 
 // 将虚拟机从服务器中移除，恢复服务器资源
-// 扣除服务器资源, 并且将VM与服务器相关联, 注意, 这个一定要在检查是否能够放入之后(IsServerSatisfyVM)再调用！
 void RemoveVMFromServerItem(VM &_vm, Server &_server){
 	VMType _vm_type = VMTypeInfo[_vm.vm_type_name];
 
@@ -246,7 +262,7 @@ void RemoveVMFromServerItem(VM &_vm, Server &_server){
 	VMMap.erase(_vm.vm_ID);
 
 }
-#endif
+#endif // COARSE
 
 // 对一系列添加订单做处理，扩容、迁移、分配工作全在这里做。处理完添加订单后要将RequestOrder列表清空
 void DealOrder(vector<RequestOrder> &RequestAddList){
@@ -260,7 +276,7 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
             // 放置失败就扩容, 扩容策略：随机选择一个服务器进行购买
 			// 这里应该单独一个函数出来的，但是由于扩容与当前订单密切相关，暂没想到分离的好办法
 			// 初始化一个该类型的服务器，尝试将vm放入其中，如果不行则循环再次尝试, 直到成功位置
-            srand((unsigned)time(NULL));
+
 			while(true){
 				int anticipate_server_index = rand() % ServerTypeInfo.size();
 				unordered_map<string, ServerType>::iterator _it = ServerTypeInfo.begin();
@@ -279,8 +295,14 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
                 server_item.server_ID = ServerList.size();
 
 				if(IsServerSatisfyVM(vm, server_item)){
+
 					PlantVMInServerItem(vm, server_item);
 					ServerList.push_back(server_item);
+#ifdef OutPut
+                    DayPurchaseVMIDList.push_back(vm.vm_ID);
+					DayPurchaseNumMap[server_item.server_type_name]++;
+#endif // OutPut
+
 					break;
 				}
 			}
@@ -291,12 +313,13 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
     return;
 }
 
-// 对单一删除的订单做处理, 运行该函数时要进行判断 RequestOrder 是否为空
-// 逻辑: requestOrderObject.vm_ID -> 得到VM_object -> vm.server_ID -> serverObj
+// 对单一删除的订单做处理, 运行该函数前进行判断 RequestOrder 是否为空
+// 逻辑: requestOrderObject.vm_ID -> 得到VM_object -> vm.server_ID -> serverObj引用
 // 恢复服务器的内存、移除服务器上维护的挂载节点列表
 void DealOrder(RequestOrder requestorder){
+
     VM del_vm = VMMap[requestorder.vm_ID];
-    Server server = ServerList[del_vm.server_ID];
+    Server& server = ServerList[del_vm.server_ID];
     RemoveVMFromServerItem(del_vm, server);
     return;
 }
@@ -312,9 +335,29 @@ void GenerateVMType(string type_name, int cpu_size, int mem_size, bool is_double
     VMTypeInfo[type_name] = _vm_type;
 }
 
+// 为了适应赛题输出而使用的工具函数
+vector<Server>::iterator Find(vector<Server>::iterator start_it, vector<Server>::iterator end_it, string server_type_name){
+    vector<Server>::iterator result_it;
+    for(vector<Server>::iterator curr_it = start_it; start_it!=end_it; curr_it++){
+        if(server_type_name.compare(curr_it->server_type_name) == 0){
+            result_it = curr_it;
+            break;
+        }
+    }
+    return result_it;
+}
+
+bool IsLessThan(Server _server1, Server _server2){
+    return _server1.server_ID < _server2.server_ID;
+}
+
+
 int main(){
-    const string file_path = "./TestData1.txt";
-    std::freopen(file_path.c_str(), "rb", stdin);
+
+//    const string file_path = R"(C:\Users\14437\Desktop\TestData1.txt.bak1)";
+//    std::freopen(file_path.c_str(), "rb", stdin);
+
+    srand((unsigned)time(NULL));
 
     int server_type_num;
     int vm_type_num;
@@ -348,7 +391,7 @@ int main(){
 
     scanf("%d", &total_day_num);
 
-    // 遍历所有天
+    // 遍历所有天的请求
     for(int curr_day_index=0; curr_day_index<total_day_num; curr_day_index++){
         int curr_day_request_num;
         string op, vm_ID;
@@ -375,13 +418,62 @@ int main(){
                 DealOrder(request_order);
             }
         }
-
         DealOrder(RequestAddList);
-        cout << "finished day " << curr_day_index << endl;
+
+#ifdef OutPut   // append single day's output to the TotalOutput
+        TotalOutput += ("(purchase, " + std::to_string(DayPurchaseNumMap.size()) + ")\n");
+        for(unordered_map<string, int>::iterator it = DayPurchaseNumMap.begin(); it != DayPurchaseNumMap.end(); it++){
+            TotalOutput += ("(" + it->first + ", " + std::to_string(it->second) + ")\n");
+        }
+        TotalOutput += ("(migration, 0)\n");
+
+        // 计算出当天购买的服务器数量、当天购买的服务器在ServerList中的起始下标
+        int num_of_day_purchase = 0;
+        for(auto &curr_type_it : DayPurchaseNumMap){
+            num_of_day_purchase += curr_type_it.second;
+        }
+        int curr_day_begin_idx = ServerList.size() - num_of_day_purchase;
+        int modified_curr_server_id = curr_day_begin_idx;
+
+        for(auto &curr_type_it : DayPurchaseNumMap){
+            vector<Server>::iterator curr_server_it = ServerList.begin() + curr_day_begin_idx;
+            for(int i=0; i<curr_type_it.second; i++){
+                // 在ServerList中对应今天的区间内依次寻找该类型的服务器，找到后修正该服务器的id，以及修改挂载在该服务器上的虚拟机的id
+                curr_server_it = Find(curr_server_it, ServerList.end(), curr_type_it.first);
+                curr_server_it->server_ID = modified_curr_server_id;
+                for(auto &curr_vm_id_it : curr_server_it->loading_VM_list){
+                    VMMap[curr_vm_id_it].server_ID = modified_curr_server_id;
+                }
+                curr_server_it++;
+                modified_curr_server_id++;
+            }
+        }
+
+        // 在修改完当天的server_id之后，要将其与ServerList中下标对应起来。
+        sort(ServerList.begin()+curr_day_begin_idx, ServerList.end(), IsLessThan);
+
+        for(auto& it : DayPurchaseVMIDList){
+            if(VMMap[it].is_in_A == -1){
+                DayOutput += ("(" + std::to_string(VMMap[it].server_ID) + ")" + "\n");
+            }else if(VMMap[it].is_in_A == 1){
+                DayOutput += ("(" + std::to_string(VMMap[it].server_ID) + ", A" + ")\n");
+            }else {
+                DayOutput += ("(" + std::to_string(VMMap[it].server_ID) + ", B" + ")\n");
+            }
+        }
+        TotalOutput += DayOutput;
+
+
+        DayPurchaseVMIDList.clear();
+        DayOutput.clear();
+        DayPurchaseNumMap.clear();
+#endif // OutPut
+
+        // cout << "finished day " << curr_day_index << endl;
     }
 
-
-    cout << "total number of server resource: " << ServerList.size() << endl;
+    cout << TotalOutput.substr(0, TotalOutput.size()-1) << endl;
+//    cout << "total number of server resources: " << ServerList.size() << endl;
 
     return 0;
 }
