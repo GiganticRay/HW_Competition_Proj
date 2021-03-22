@@ -7,6 +7,8 @@
 #include <iterator>
 #include <cstdlib>
 #include <time.h>
+#include <cmath>
+#include <float.h>
 
 // 粗糙的处理订单的版本
 #define COARSE
@@ -156,32 +158,65 @@ vector<int> DayPurchaseVMIDList;
 #endif // OutPut
 
 #ifdef COARSE
-// 将vm对象与server对象的资源做对比，看能否放得下(vm与server都可以是不完整变量，这里只做资源对比)
-bool IsServerSatisfyVM(VM &_vm, Server &_server){
-    VMType _vm_type = VMTypeInfo[_vm.vm_type_name];
-	bool result = false;
-	if(_vm_type.is_double_D){
-		if(_server.A_curr_cpu_size > (_vm_type.cpu_size)/2 &&
-				_server.B_curr_cpu_size > (_vm_type.cpu_size)/2 &&
-				_server.A_curr_mem_size > (_vm_type.mem_size)/2 &&
-				_server.B_curr_mem_size > (_vm_type.mem_size)/2 ){
-			result = true;
-		}
-	}else{  // 单节点部署, 先看A节点，不够再B节点
-		if(_server.A_curr_cpu_size > (_vm_type.cpu_size) &&
-				_server.A_curr_mem_size > (_vm_type.mem_size)){
-			result = true;
-		}else if(_server.B_curr_cpu_size > (_vm_type.cpu_size) &&
-				_server.B_curr_mem_size > (_vm_type.mem_size)){
-			result = true;
-		}
-	}
-	return result;
+
+// 计算这两组数据的一个百分比不匹配程度，为了避免为0，所以给其加一个1, 值越小，表示越匹配
+float CaculateUnMatchRate(int num_cpu1, int num_mem1, int num_cpu2, int num_mem2){
+    float rate1 = 1.0*(num_cpu1+1)/(num_mem2+1);
+    float rate2 = 1.0*(num_cpu2+1)/(num_mem2+1);
+    return fabs(1-rate1/rate2); // min[(abs(x-1))], 取得最接近于1，即完美匹配的那一项，所以最后这个值越小越好，用min。
 }
 
-// 扣除服务器资源, 并且将VM与服务器相关联, 注意, 这个一定要在检查是否能够放入之后(IsServerSatisfyVM)再调用！
+// 将vm对象与server对象的资源做对比，看能否放得下(vm与server都可以是不完整变量，这里只做资源对比)
+// 放不下返回 -1, 放得下返回当前服务器与虚拟机的契合程度,
+// un_match_rate: 契合程度，放得下的话range from[0, 1]，1最契合, -1表示放不下
+float GetUnMatchRateOfVmAndServ(VM &_vm, Server &_server){
+    VMType _vm_type = VMTypeInfo[_vm.vm_type_name];
+    float un_match_rate = -1;
+
+	if(_vm_type.is_double_D){
+		if(_server.A_curr_cpu_size >= (_vm_type.cpu_size)/2 &&
+				_server.B_curr_cpu_size >= (_vm_type.cpu_size)/2 &&
+				_server.A_curr_mem_size >= (_vm_type.mem_size)/2 &&
+				_server.B_curr_mem_size >= (_vm_type.mem_size)/2 ){
+
+            float unmatch_rate_of_node_a = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.A_curr_cpu_size,
+                                                          _server.A_curr_mem_size);
+            float unmatch_rate_of_node_b = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.B_curr_cpu_size,
+                                                          _server.B_curr_mem_size);
+            un_match_rate = min(unmatch_rate_of_node_a, unmatch_rate_of_node_b);
+
+		}
+	}else{  // 单节点部署
+		if(_server.A_curr_cpu_size > (_vm_type.cpu_size) &&
+				_server.A_curr_mem_size > (_vm_type.mem_size)){
+			float unmatch_rate_of_node_a = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.A_curr_cpu_size,
+                                                          _server.A_curr_mem_size);
+            un_match_rate=unmatch_rate_of_node_a;
+		}
+		if(_server.B_curr_cpu_size > (_vm_type.cpu_size) &&
+				_server.B_curr_mem_size > (_vm_type.mem_size)){
+			float unmatch_rate_of_node_b = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.B_curr_cpu_size,
+                                                          _server.B_curr_mem_size);
+            un_match_rate=min(un_match_rate, unmatch_rate_of_node_b);
+		}
+	}
+	return un_match_rate;
+}
+
+// 扣除服务器资源, 并且将VM与服务器相关联, 注意, 这个一定要在检查是否能够放入之后(GetUnMatchRateOfVmAndServ)再调用！
 void PlantVMInServerItem(VM &_vm, Server &_server){
 	VMType _vm_type = VMTypeInfo[_vm.vm_type_name];
+
+	float curr_un_rate_with_noad_a = FLT_MAX;
+	float curr_un_rate_with_noad_b = FLT_MAX;
 
 	if(_vm_type.is_double_D){
 		_server.A_curr_cpu_size -= (_vm_type.cpu_size)/2;
@@ -192,20 +227,32 @@ void PlantVMInServerItem(VM &_vm, Server &_server){
 		// 表明虚拟机的挂载方式
 		_vm.is_in_A = -1;
 
-	}else{  // 单节点部署, 先看A节点，不够再B节点
+	}else{  // 单节点部署, 比较匹配度（看GetUnMatchRateOfVmAndServ那个函数），在满足条件的情况下，看A节点的匹配度高还是B节点的匹配度高
 		if(_server.A_curr_cpu_size > (_vm_type.cpu_size) &&
 				_server.A_curr_mem_size > (_vm_type.mem_size)){
-			_server.A_curr_cpu_size -= (_vm_type.cpu_size);
-			_server.A_curr_mem_size -= (_vm_type.mem_size);
 
-			_vm.is_in_A = 1;
-
-		}else if(_server.B_curr_cpu_size > (_vm_type.cpu_size) &&
+            curr_un_rate_with_noad_a = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.A_curr_cpu_size,
+                                                          _server.A_curr_mem_size);
+		}
+		if(_server.B_curr_cpu_size > (_vm_type.cpu_size) &&
 				_server.B_curr_mem_size > (_vm_type.mem_size)){
-			_server.B_curr_cpu_size -= (_vm_type.cpu_size);
-			_server.B_curr_mem_size -= (_vm_type.mem_size);
 
-			_vm.is_in_A = 0;
+            curr_un_rate_with_noad_b = CaculateUnMatchRate(_vm_type.cpu_size,
+                                                          _vm_type.mem_size,
+                                                          _server.B_curr_cpu_size,
+                                                          _server.B_curr_mem_size);
+		}
+		// 如果A、B节点都有容量，那么两个都更新了值，否则如果只有一个有容量，那么另一个没有容量的就是FLT_MAX，所以这里比较min
+		if(curr_un_rate_with_noad_a < curr_un_rate_with_noad_b){
+            _vm.is_in_A = 1;
+            _server.A_curr_cpu_size -= (_vm_type.cpu_size);
+			_server.A_curr_mem_size -= (_vm_type.mem_size);
+		}else{
+            _vm.is_in_A = 0;
+            _server.B_curr_cpu_size -= (_vm_type.cpu_size);
+			_server.B_curr_mem_size -= (_vm_type.mem_size);
 		}
 	}
 	// 处理服务器与虚拟机的联系信息
@@ -219,21 +266,30 @@ bool PlantVMInServerList(VM &_vm){
 	bool result = false;
 
 	// 遍历所有服务器，等待刘兄最小二乘按照浪费成本排序遍历
-    vector<Server>::iterator curr_it = ServerList.begin() + (int)(ServerList.size()/1.33);
-//    vector<Server>::iterator curr_it = ServerList.begin();
+//    vector<Server>::iterator curr_it = ServerList.begin() + (int)(ServerList.size()/1.33);
+    vector<Server>::iterator curr_it = ServerList.begin();
     vector<Server>::iterator end_it = ServerList.end();
+
+    // 最匹配的服务器id以及其不匹配率的
+    int most_appropriate_server_id = -1;
+    float most_appropriate_un_match_rate = FLT_MAX;
     for(; curr_it != end_it; curr_it++){
-		if(IsServerSatisfyVM(_vm, *curr_it)){
-			PlantVMInServerItem(_vm, *curr_it);
+        float curr_un_match_rate = GetUnMatchRateOfVmAndServ(_vm, *curr_it);
+		if(curr_un_match_rate != -1){
+            most_appropriate_un_match_rate = min(curr_un_match_rate, most_appropriate_un_match_rate);
+            most_appropriate_server_id = (*curr_it).server_ID;
 			result = true;
-
-#ifdef OutPut
-            DayPurchaseVMIDList.push_back(_vm.vm_ID);
-#endif // OutPut
-
-			break;
 		}
     }
+
+    if(result == true){
+        PlantVMInServerItem(_vm, ServerList[most_appropriate_server_id]);
+#ifdef OutPut
+        DayPurchaseVMIDList.push_back(_vm.vm_ID);
+#endif // OutPut
+    }
+
+
     return result;
 
 }
@@ -294,7 +350,7 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
                 // 给该服务器对象设置id，注意，新建的服务器不一定就可以放入服务器列表
                 server_item.server_ID = ServerList.size();
 
-				if(IsServerSatisfyVM(vm, server_item)){
+				if(GetUnMatchRateOfVmAndServ(vm, server_item) != -1){
 
 					PlantVMInServerItem(vm, server_item);
 					ServerList.push_back(server_item);
@@ -469,7 +525,7 @@ int main(){
         DayPurchaseNumMap.clear();
 #endif // OutPut
 
-        // cout << "finished day " << curr_day_index << endl;
+//         cout << "finished day " << curr_day_index << endl;
     }
 
     cout << TotalOutput.substr(0, TotalOutput.size()-1) << endl;
