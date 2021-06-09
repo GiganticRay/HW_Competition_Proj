@@ -7,12 +7,14 @@
 #include <iterator>
 #include <cstdlib>
 #include <time.h>
+#include <cmath>
 
 // 粗糙的处理订单的版本
 #define COARSE
 // 输出
 #define OutPut
-
+// 是否是用判题器进行判定的版本
+// #define LOCAL
 
 using namespace std;
 
@@ -214,26 +216,55 @@ void PlantVMInServerItem(VM &_vm, Server &_server){
 	_server.loading_VM_list.push_back(_vm.vm_ID);
 }
 
+// random generator function
+int myrandom(int i){ return rand()%i;}
 // 将虚拟机放入现有服务器列表资源，成功返回true、失败返回false
 bool PlantVMInServerList(VM &_vm){
 	bool result = false;
 
-	// 遍历所有服务器，等待刘兄最小二乘按照浪费成本排序遍历
-    vector<Server>::iterator curr_it = ServerList.begin() + (int)(ServerList.size()/1.33);
-//    vector<Server>::iterator curr_it = ServerList.begin();
-    vector<Server>::iterator end_it = ServerList.end();
-    for(; curr_it != end_it; curr_it++){
-		if(IsServerSatisfyVM(_vm, *curr_it)){
-			PlantVMInServerItem(_vm, *curr_it);
-			result = true;
+	// 此处采用基础版本的Local Search
+    /*
+        搜索空间:   all purchased Server for current VM
+        可行解:     Server that could satisfy current VM
+        领域:       all other server except chosen one
+        评价函数:   (crammed server with higher load rate. so cost funtion = reminder capacity of that server, here I use #server.B.cpu
+        最优解:     solution corrosponding to the least cost function.
+        策略: 随机在ServerList中找解，如果已经找到一个可行解，那么再寻遍 10% * len(ServerList), 如果到了 60% * len(ServerList)仍未找到可行解，那么返回false
+    */
+    // 随机生成访问数组 0-> SeverList.length 打乱, 截取前60%
+    vector<int> v_visited;
+    for(int i=0; i < ceil(0.9 * ServerList.size()); i++){
+        v_visited.push_back(i);
+    }
+    random_shuffle(v_visited.begin(), v_visited.end(), myrandom);
+    v_visited.assign(v_visited.begin(), v_visited.end()-0.4*v_visited.size());
+
+    int i_opt_server_idx    = -1;               // 最优分配服务器id
+    int i_opt_cost          = INT32_MAX;        // opt_cost
+    int i_edurance_time     = v_visited.size(); // 搜索次数的阈值
+    for (int i=0; i<i_edurance_time && i<v_visited.size(); i++){
+        if(IsServerSatisfyVM(_vm, ServerList[i])){
+            if(i_opt_server_idx==-1){
+                i_edurance_time = i + 0.1*v_visited.size();
+            }
+            int curr_cost = ServerList[i].B_curr_cpu_size;
+            if(curr_cost < i_opt_cost){
+                i_opt_server_idx    = i;
+                i_opt_cost          = curr_cost;
+            }
+        }
+    }
+    if(i_opt_server_idx == -1){
+        // 需要进行新服务器的购买
+    }else{
+        PlantVMInServerItem(_vm, ServerList[i_opt_server_idx]);
+        result = true;
 
 #ifdef OutPut
-            DayPurchaseVMIDList.push_back(_vm.vm_ID);
+        DayPurchaseVMIDList.push_back(_vm.vm_ID);
 #endif // OutPut
-
-			break;
-		}
     }
+
     return result;
 
 }
@@ -353,9 +384,11 @@ bool IsLessThan(Server _server1, Server _server2){
 
 
 int main(){
+    const string file_path = "/home/lei/Document/Proj/HW_Competition_Proj/OtherResource/TestData1.txt";
 
-//    const string file_path = R"(C:\Users\14437\Desktop\TestData1.txt.bak1)";
-//    std::freopen(file_path.c_str(), "rb", stdin);
+#ifdef LOCAL
+    std::freopen(file_path.c_str(), "rb", stdin);
+#endif // LOCAL
 
     srand((unsigned)time(NULL));
 
@@ -471,6 +504,10 @@ int main(){
 
         // cout << "finished day " << curr_day_index << endl;
     }
+
+#ifdef LOCAL
+    freopen("out.txt", "w", stdout);
+#endif // LOCAL
 
     cout << TotalOutput.substr(0, TotalOutput.size()-1) << endl;
 //    cout << "total number of server resources: " << ServerList.size() << endl;

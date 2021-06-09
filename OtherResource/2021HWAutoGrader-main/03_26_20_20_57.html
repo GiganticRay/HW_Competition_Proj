@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <header align="center">
+      <h1>Report</h1>
+    </header>
+    <div>
+      <ol>
+
+        <li>
+          <h2>TestData1.txt  <img src="./resource/icon-warning.png" width="40"></h2>
+          <div>
+            <table align="center">
+              <tr>
+                <td><img src="./resource\03_26_20_20_55\1.png" border="0" /></td>
+                <td><img src="./resource\03_26_20_20_55\2.png" border="0" /></td>
+              </tr>
+              <tr>
+                <td><img src="./resource\03_26_20_20_55\3.png" border="0" /></td>
+                <td><img src="./resource\03_26_20_20_55\4.png" border="0" /></td>
+              </tr>
+            </table>
+          </div>
+          <div align="center">
+            <table border="1">
+              <tr>
+                <th>结果</th>
+                <th>值</th>
+              </tr>
+              <tr>
+                <td>总成本</td>
+                <td>861166799.0</td>
+              </tr>
+              <tr>
+                <td>运行时间</td>
+                <td>12.6792s</td>
+              </tr>
+              <tr>
+                <td>硬件成本</td>
+                <td>515559151.0</td>
+              </tr>
+              <tr>
+                <td>能源成本</td>
+                <td>345607648.0</td>
+              <tr>
+                <td>平均闲置率</td>
+                <td>2.068154 % </td>
+              </tr>
+              <tr>
+                <td>平均每日能源成本</td>
+                <td>432009.56</td>
+              </tr>
+              <tr>
+                <td>总迁移次数</td>
+                <td>8714</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div align="center">
+            <table border="1">
+              <tr>
+                <th>错误类型</th>
+                <th>错误信息</th>
+                <th>错误请求</th>
+                <th>错误服务器ID</th>
+                <th>挂载虚拟机列表(仅显示最后5个虚拟机)</th>
+              </tr>
+              
+              <tr>
+                <td>虚拟机迁移超过上限</td>
+                <td>发生于第4天的第3条迁移操作，允许迁移次数最大为2</td>
+                <td>(939102148,16)</td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td>虚拟机迁移超过上限</td>
+                <td>发生于第5天的第3条迁移操作，允许迁移次数最大为2</td>
+                <td>(868508759,47)</td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td>虚拟机迁移超过上限</td>
+                <td>发生于第6天的第4条迁移操作，允许迁移次数最大为3</td>
+                <td>(106833108,10)</td>
+                <td></td>
+                <td></td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第6天的第1条Add操作</td>
+                <td>(add, vmDO74V,1036845103)</td>
+                <td>96 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[143846331, 1036845103]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第6天的第11条Add操作</td>
+                <td>(add, vmZY9YL,164747408)</td>
+                <td>96 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[143846331, 1036845103, 164747408]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第6天的第13条Add操作</td>
+                <td>(add, vmURTXU,541952009)</td>
+                <td>96 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[143846331, 1036845103, 164747408, 541952009]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第6天的第16条Add操作</td>
+                <td>(add, vmXM063,454702133)</td>
+                <td>96 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[143846331, 1036845103, 164747408, 541952009, 454702133]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第6天的第86条Add操作</td>
+                <td>(add, vmQGM5V,375579318)</td>
+                <td>96 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[1036845103, 164747408, 541952009, 454702133, 375579318]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第8天的第1条Migration操作</td>
+                <td>(961303232,1, B)</td>
+                <td>1 (hostTUL1P,{'cpu': 286, 'memory': 858, 'hardCost': 142387, 'energyCost': 176})</td>
+                <td>[931363796, 264940888, 695477675, 1026212935, 961303232]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第2条Add操作</td>
+                <td>(add, vmR5XQT,54016060)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[196800040, 54016060]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第5条Add操作</td>
+                <td>(add, vm9XHCG,26792340)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[196800040, 54016060, 26792340]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第8条Add操作</td>
+                <td>(add, vmQ6JXN,1033342972)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[196800040, 54016060, 26792340, 1033342972]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第9条Add操作</td>
+                <td>(add, vm0QPSV,482457893)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[196800040, 54016060, 26792340, 1033342972, 482457893]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第12条Add操作</td>
+                <td>(add, vm5IZOL,496445346)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[993349098, 188775176, 496445346]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第13条Add操作</td>
+                <td>(add, vmSYJAF,151566297)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[993349098, 188775176, 496445346, 151566297]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第20条Add操作</td>
+                <td>(add, vmJH34U,563568735)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[993349098, 188775176, 496445346, 151566297, 563568735]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第28条Add操作</td>
+                <td>(add, vmSVN7N,450537938)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[188775176, 496445346, 151566297, 563568735, 450537938]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第39条Add操作</td>
+                <td>(add, vm3GI60,7559220)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[54016060, 26792340, 1033342972, 482457893, 7559220]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第10天的第64条Add操作</td>
+                <td>(add, vmBF99U,680963901)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[496445346, 151566297, 563568735, 450537938, 680963901]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第3条Add操作</td>
+                <td>(add, vmWCYUK,78390990)</td>
+                <td>140 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[565291651, 259017158, 78390990]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第6条Add操作</td>
+                <td>(add, vmLYYZZ,994206355)</td>
+                <td>140 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[565291651, 259017158, 78390990, 994206355]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第10条Add操作</td>
+                <td>(add, vmHLMH1,809715359)</td>
+                <td>154 (hostEDTJV,{'cpu': 224, 'memory': 1024, 'hardCost': 148990, 'energyCost': 186})</td>
+                <td>[268527190, 279583769, 544017679, 385873749, 809715359]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第11条Add操作</td>
+                <td>(add, vmJ17MG,425597004)</td>
+                <td>154 (hostEDTJV,{'cpu': 224, 'memory': 1024, 'hardCost': 148990, 'energyCost': 186})</td>
+                <td>[279583769, 544017679, 385873749, 809715359, 425597004]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第12条Add操作</td>
+                <td>(add, vmZR25M,564607126)</td>
+                <td>154 (hostEDTJV,{'cpu': 224, 'memory': 1024, 'hardCost': 148990, 'energyCost': 186})</td>
+                <td>[544017679, 385873749, 809715359, 425597004, 564607126]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第15条Add操作</td>
+                <td>(add, vm2C9RO,693808249)</td>
+                <td>154 (hostEDTJV,{'cpu': 224, 'memory': 1024, 'hardCost': 148990, 'energyCost': 186})</td>
+                <td>[385873749, 809715359, 425597004, 564607126, 693808249]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第33条Add操作</td>
+                <td>(add, vmZGOPJ,47176801)</td>
+                <td>140 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[565291651, 259017158, 78390990, 994206355, 47176801]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第43条Add操作</td>
+                <td>(add, vmFU84X,78753997)</td>
+                <td>140 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[259017158, 78390990, 994206355, 47176801, 78753997]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第11天的第45条Add操作</td>
+                <td>(add, vmG87OI,867873887)</td>
+                <td>154 (hostEDTJV,{'cpu': 224, 'memory': 1024, 'hardCost': 148990, 'energyCost': 186})</td>
+                <td>[809715359, 425597004, 564607126, 693808249, 867873887]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第10条Add操作</td>
+                <td>(add, vm67RL2,842930031)</td>
+                <td>148 (hostZ1GV0,{'cpu': 122, 'memory': 416, 'hardCost': 61328, 'energyCost': 78})</td>
+                <td>[26792340, 1033342972, 482457893, 7559220, 842930031]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第17条Add操作</td>
+                <td>(add, vmTOAZT,881112257)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[108542329, 63967535, 675913130, 881112257]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第19条Add操作</td>
+                <td>(add, vm8CXX6,348428418)</td>
+                <td>182 (host26RJR,{'cpu': 336, 'memory': 162, 'hardCost': 81192, 'energyCost': 102})</td>
+                <td>[948970412, 348428418]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第21条Add操作</td>
+                <td>(add, vmLEJGU,956181319)</td>
+                <td>182 (host26RJR,{'cpu': 336, 'memory': 162, 'hardCost': 81192, 'energyCost': 102})</td>
+                <td>[948970412, 348428418, 956181319]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第24条Add操作</td>
+                <td>(add, vmG3V23,614640037)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[108542329, 63967535, 675913130, 881112257, 614640037]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第26条Add操作</td>
+                <td>(add, vmOLDC0,447765096)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[63967535, 675913130, 881112257, 614640037, 447765096]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第29条Add操作</td>
+                <td>(add, vmNOUHT,447903380)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[675913130, 881112257, 614640037, 447765096, 447903380]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第30条Add操作</td>
+                <td>(add, vm5WWPM,1030962107)</td>
+                <td>182 (host26RJR,{'cpu': 336, 'memory': 162, 'hardCost': 81192, 'energyCost': 102})</td>
+                <td>[948970412, 348428418, 956181319, 1030962107]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第32条Add操作</td>
+                <td>(add, vmGVZHQ,35588477)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[881112257, 614640037, 447765096, 447903380, 35588477]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第34条Add操作</td>
+                <td>(add, vmN9DL5,580780813)</td>
+                <td>182 (host26RJR,{'cpu': 336, 'memory': 162, 'hardCost': 81192, 'energyCost': 102})</td>
+                <td>[948970412, 348428418, 956181319, 1030962107, 580780813]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第67条Add操作</td>
+                <td>(add, vmVFFFI,1042430153)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[614640037, 447765096, 447903380, 35588477, 1042430153]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第12天的第107条Add操作</td>
+                <td>(add, vm860X5,511658455)</td>
+                <td>182 (host26RJR,{'cpu': 336, 'memory': 162, 'hardCost': 81192, 'energyCost': 102})</td>
+                <td>[348428418, 956181319, 1030962107, 580780813, 511658455]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第15条Add操作</td>
+                <td>(add, vm06N9R,788269955)</td>
+                <td>190 (host58KXO,{'cpu': 364, 'memory': 278, 'hardCost': 98004, 'energyCost': 122})</td>
+                <td>[579185929, 125171774, 788269955]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第16条Add操作</td>
+                <td>(add, vmGM55F,675250502)</td>
+                <td>190 (host58KXO,{'cpu': 364, 'memory': 278, 'hardCost': 98004, 'energyCost': 122})</td>
+                <td>[579185929, 125171774, 788269955, 675250502]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第21条Add操作</td>
+                <td>(add, vmMTFPW,986365477)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[447765096, 447903380, 35588477, 1042430153, 986365477]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第22条Add操作</td>
+                <td>(add, vmRIJ2F,8548320)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[151566297, 563568735, 450537938, 680963901, 8548320]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第24条Add操作</td>
+                <td>(add, vmXCQ91,273818675)</td>
+                <td>190 (host58KXO,{'cpu': 364, 'memory': 278, 'hardCost': 98004, 'energyCost': 122})</td>
+                <td>[579185929, 125171774, 788269955, 675250502, 273818675]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第13天的第95条Add操作</td>
+                <td>(add, vmH024K,163386679)</td>
+                <td>161 (host935A0,{'cpu': 580, 'memory': 116, 'hardCost': 129999, 'energyCost': 165})</td>
+                <td>[563568735, 450537938, 680963901, 8548320, 163386679]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第14天的第3条Add操作</td>
+                <td>(add, vm8CXX6,391217341)</td>
+                <td>213 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[620177989, 391217341]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第14天的第19条Add操作</td>
+                <td>(add, vmF8A9K,833233129)</td>
+                <td>213 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[620177989, 391217341, 833233129]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第14天的第23条Add操作</td>
+                <td>(add, vmJ7UBB,890737788)</td>
+                <td>213 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[620177989, 391217341, 833233129, 890737788]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第14天的第109条Add操作</td>
+                <td>(add, vmCBIR1,607330987)</td>
+                <td>180 (hostVW1N6,{'cpu': 126, 'memory': 408, 'hardCost': 61305, 'energyCost': 77})</td>
+                <td>[447903380, 35588477, 1042430153, 986365477, 607330987]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第15天的第4条Add操作</td>
+                <td>(add, vmLMNAV,471504078)</td>
+                <td>225 (host6CFNF,{'cpu': 128, 'memory': 202, 'hardCost': 42313, 'energyCost': 54})</td>
+                <td>[494622599, 112642228, 471504078]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第15天的第13条Add操作</td>
+                <td>(add, vm9U6WT,139438784)</td>
+                <td>225 (host6CFNF,{'cpu': 128, 'memory': 202, 'hardCost': 42313, 'energyCost': 54})</td>
+                <td>[494622599, 112642228, 471504078, 139438784]</td>
+              </tr>
+
+              <tr>
+                <td>资源分配溢出</td>
+                <td>发生于第15天的第111条Add操作</td>
+                <td>(add, vm4YTN0,512865079)</td>
+                <td>213 (hostFAZZ8,{'cpu': 540, 'memory': 136, 'hardCost': 123331, 'energyCost': 153})</td>
+                <td>[620177989, 391217341, 833233129, 890737788, 512865079]</td>
+              </tr>
+
+            </table>
+          </div>
+
+        </li>
+
+      </ol>
+    </div>
+  </body>
+</html>
