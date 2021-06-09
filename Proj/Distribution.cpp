@@ -230,6 +230,8 @@ bool PlantVMInServerList(VM &_vm){
         评价函数:   (crammed server with higher load rate. so cost funtion = reminder capacity of that server, here I use #server.B.cpu
         最优解:     solution corrosponding to the least cost function.
         策略: 随机在ServerList中找解，如果已经找到一个可行解，那么再寻遍 10% * len(ServerList), 如果到了 60% * len(ServerList)仍未找到可行解，那么返回false
+        1.基础 local_search
+        2.引入 ε-Greedy 策略, 由于本身cost_function设置不是很合理，所以考虑将epsilon调高一点点，设为0.3
     */
     // 随机生成访问数组 0-> SeverList.length 打乱, 截取前60%
     vector<int> v_visited;
@@ -242,13 +244,15 @@ bool PlantVMInServerList(VM &_vm){
     int i_opt_server_idx    = -1;               // 最优分配服务器id
     int i_opt_cost          = INT32_MAX;        // opt_cost
     int i_edurance_time     = v_visited.size(); // 搜索次数的阈值
+    float f_epsilon         = 0.3;              // 以0.3的概率接受不那么好的解作为当前最优解
     for (int i=0; i<i_edurance_time && i<v_visited.size(); i++){
         if(IsServerSatisfyVM(_vm, ServerList[i])){
             if(i_opt_server_idx==-1){
                 i_edurance_time = i + 0.1*v_visited.size();
             }
             int curr_cost = ServerList[i].B_curr_cpu_size;
-            if(curr_cost < i_opt_cost){
+            float f_rand_p = rand() % 1000 / (float)(1000);
+            if(curr_cost < i_opt_cost || f_rand_p < f_epsilon){
                 i_opt_server_idx    = i;
                 i_opt_cost          = curr_cost;
             }
