@@ -232,6 +232,7 @@ bool PlantVMInServerList(VM &_vm){
         策略: 随机在ServerList中找解，如果已经找到一个可行解，那么再寻遍 10% * len(ServerList), 如果到了 60% * len(ServerList)仍未找到可行解，那么返回false
         1.基础 local_search
         2.引入 ε-Greedy 策略, 由于本身cost_function设置不是很合理，所以考虑将epsilon调高一点点，设为0.3
+        3. 模拟退火算法: 此处“时间”限制可以看作是设置的迭代次数的限制。
     */
     // 随机生成访问数组 0-> SeverList.length 打乱, 截取前60%
     vector<int> v_visited;
@@ -250,9 +251,11 @@ bool PlantVMInServerList(VM &_vm){
             if(i_opt_server_idx==-1){
                 i_edurance_time = i + 0.1*v_visited.size();
             }
-            int curr_cost = ServerList[i].B_curr_cpu_size;
-            float f_rand_p = rand() % 1000 / (float)(1000);
-            if(curr_cost < i_opt_cost || f_rand_p < f_epsilon){
+            int curr_cost       = ServerList[i].B_curr_cpu_size;
+            float f_threshold   = rand() % 1000 / (float)(1000);
+            float f_p           = exp(float(i_opt_cost-curr_cost)/i+1);
+
+            if(f_p > f_threshold){
                 i_opt_server_idx    = i;
                 i_opt_cost          = curr_cost;
             }
