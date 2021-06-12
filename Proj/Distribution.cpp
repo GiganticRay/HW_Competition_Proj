@@ -313,9 +313,15 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
         if(!PlantVMInServerList(vm)){
             // 放置失败就扩容, 扩容策略：随机选择一个服务器进行购买
 			// 这里应该单独一个函数出来的，但是由于扩容与当前订单密切相关，暂没想到分离的好办法
-			// 初始化一个该类型的服务器，尝试将vm放入其中，如果不行则循环再次尝试, 直到成功位置
+			// 初始化一个该类型的服务器，尝试将vm放入其中，如果不行则循环再次尝试
+            // 如果可以，则再进行10次查询(取 CPU较少的) 的服务器, 因为这样cpu不会有多少的浪费)
+            
+            Server  s_opt_server;
+            int     i_limit_times = 2;
+            int   i_opt_cost = INT32_MAX;
 
-			while(true){
+            // while 决胜出 s_opt_server
+			while(i_limit_times >= 0){
 				int anticipate_server_index = rand() % ServerTypeInfo.size();
 				unordered_map<string, ServerType>::iterator _it = ServerTypeInfo.begin();
 				for(int i=0; i<anticipate_server_index; i++){
@@ -323,27 +329,33 @@ void DealOrder(vector<RequestOrder> &RequestAddList){
 				}
 				ServerType _server_type = _it->second;
 
-				Server server_item = Server(_server_type.type_name,
+				Server _server_item = Server(_server_type.type_name,
 						ServerList.size()-1,
 						_server_type.cpu_size/2,
 						_server_type.mem_size/2,
 						_server_type.cpu_size/2,
 						_server_type.mem_size/2);
+
                 // 给该服务器对象设置id，注意，新建的服务器不一定就可以放入服务器列表
-                server_item.server_ID = ServerList.size();
+                _server_item.server_ID = ServerList.size();
+                int i_curr_cost = _server_item.B_curr_cpu_size;
 
-				if(IsServerSatisfyVM(vm, server_item)){
-
-					PlantVMInServerItem(vm, server_item);
-					ServerList.push_back(server_item);
-#ifdef OutPut
-                    DayPurchaseVMIDList.push_back(vm.vm_ID);
-					DayPurchaseNumMap[server_item.server_type_name]++;
-#endif // OutPut
-
-					break;
+				if(IsServerSatisfyVM(vm, _server_item)){
+                    i_limit_times -= 1; // 找到一个满足的，就减一
+                    if(i_curr_cost < i_opt_cost){
+                        i_opt_cost = i_curr_cost;
+                        s_opt_server = _server_item;
+                    }
 				}
 			}
+
+            // 决胜出 s_opt_server
+            PlantVMInServerItem(vm, s_opt_server);
+            ServerList.push_back(s_opt_server);
+#ifdef OutPut
+            DayPurchaseVMIDList.push_back(vm.vm_ID);
+            DayPurchaseNumMap[s_opt_server.server_type_name]++;
+#endif // OutPut
 		}
     }
 	// 清空
